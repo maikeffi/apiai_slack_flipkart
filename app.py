@@ -33,21 +33,21 @@ def makeWebhookResult():
 
     print("Response:")
 
-    speech = "Flipkart Catagories"
+    speech = "Flipkart Categories"
     slack_message = {
-        "text": "Which Catagory are you looking for?",
+        "text": "Which Category are you looking for?",
         "response_type": "in_channel",
         "attachments": [
             {
-                "text": "Choose a Catagory",
+                "text": "Choose a Category",
                 "fallback": "If you could read this message, you'd be choosing something fun to do right now.",
                 "color": "#3AA3E3",
                 "attachment_type": "default",
-                "callback_id": "catagory_selection",
+                "callback_id": "category_selection",
                 "actions": [
                     {
-                        "name": "catagory_list",
-                        "text": "Pick a Catagory...",
+                        "name": "category_list",
+                        "text": "Pick a Category...",
                         "type": "select",
                         "options": [
                             {
