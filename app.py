@@ -24,12 +24,24 @@ def webhook():
 
 def processRequest(req):
 
-    if req.get("result").get("action") != "getFlipkartCat":
-        return {            "text": "Work in progress."        }
+    if req.get("result").get("action") == "getFlipkartCat":
+        res = makeWebhookResult()
+        return res
 
-    res = makeWebhookResult()
+    res = actionNotFound()
     return res
 
+def actionNotFound():
+    speech = "Flipkart Work in progress."
+    slack_message = {"text": "Work in progress." }
+
+    return {
+        "speech": speech,
+        "displayText": speech,
+        "data": {"slack": slack_message},
+        # "contextOut": [],
+        "source": "apiai-flipkart-webhook-sample"
+    }
 def makeWebhookResult():
 
     print("Response:")
@@ -93,7 +105,7 @@ def makeWebhookResult():
         "displayText": speech,
         "data": {"slack": slack_message},
         # "contextOut": [],
-        "source": "apiai-weather-webhook-sample"
+        "source": "apiai-flipkart-webhook-sample"
     }
 
 if __name__ == '__main__':
