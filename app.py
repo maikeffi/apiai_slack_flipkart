@@ -23,8 +23,9 @@ def webhook():
     return r
 
 def processRequest(req):
+
     if req.get("result").get("action") != "getFlipkartCat":
-        return {}
+        return {            "text": "Work in progress."        }
 
     res = makeWebhookResult()
     return res
