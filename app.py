@@ -1,9 +1,14 @@
-import os
+#!/usr/bin/env python
+
+import urllib
 import json
+import os
+
 from flask import Flask
 from flask import request
 from flask import make_response
 
+# Flask app should start in global layout
 app = Flask(__name__)
 
 
@@ -17,96 +22,119 @@ def webhook():
     res = processRequest(req)
 
     res = json.dumps(res, indent=4)
-    # print(res)
+    print(res)
     r = make_response(res)
     r.headers['Content-Type'] = 'application/json'
     return r
 
+
 def processRequest(req):
+    if req.get("result").get("action") != "yahooWeatherForecast":
+        return {}
+    baseurl = "https://query.yahooapis.com/v1/public/yql?"
+    yql_query = makeYqlQuery(req)
+    if yql_query is None:
+        return {}
+    yql_url = baseurl + urllib.urlencode({'q': yql_query}) + "&format=json"
+    print(yql_url)
 
-    if req.get("result").get("action") == "getFlipkartCat":
-        res = makeWebhookResult()
-        return res
+    result = urllib.urlopen(yql_url).read()
+    print("yql result: ")
+    print(result)
 
-    res = actionNotFound()
+    data = json.loads(result)
+    res = makeWebhookResult(data)
     return res
 
-def actionNotFound():
-    speech = "Flipkart Work in progress."
-    slack_message = {"text": "Work in progress." }
 
-    return {
-        "speech": speech,
-        "displayText": speech,
-        "data": {"slack": slack_message},
-        # "contextOut": [],
-        "source": "apiai-flipkart-webhook-sample"
-    }
-def makeWebhookResult():
+def makeYqlQuery(req):
+    result = req.get("result")
+    parameters = result.get("parameters")
+    city = parameters.get("geo-city")
+    if city is None:
+        return None
+
+    return "select * from weather.forecast where woeid in (select woeid from geo.places(1) where text='" + city + "')"
+
+
+def makeWebhookResult(data):
+    query = data.get('query')
+    if query is None:
+        return {}
+
+    result = query.get('results')
+    if result is None:
+        return {}
+
+    channel = result.get('channel')
+    if channel is None:
+        return {}
+
+    item = channel.get('item')
+    location = channel.get('location')
+    units = channel.get('units')
+    if (location is None) or (item is None) or (units is None):
+        return {}
+
+    condition = item.get('condition')
+    if condition is None:
+        return {}
+
+    # print(json.dumps(item, indent=4))
+
+    speech = "Today in " + location.get('city') + ": " + condition.get('text') + \
+             ", the temperature is " + condition.get('temp') + " " + units.get('temperature')
 
     print("Response:")
+    print(speech)
 
-    speech = "Flipkart Categories"
-    slack_message = {
-        "text": "Which Category are you looking for?",
-        "response_type": "in_channel",
-        "attachments": [
-            {
-                "text": "Choose a Category",
-                "fallback": "If you could read this message, you'd be choosing something fun to do right now.",
-                "color": "#3AA3E3",
-                "attachment_type": "default",
-                "callback_id": "category_selection",
-                "actions": [
-                    {
-                        "name": "category_list",
-                        "text": "Pick a Category...",
-                        "type": "select",
-                        "options": [
-                            {
-                                "text": "Laptops",
-                                "value": "laptops"
-                            },
-                            {
-                                "text": "Tablets",
-                                "value": "tablets"
-                            },
-                            {
-                                "text": "Desktops",
-                                "value": "desktops"
-                            },
-                            {
-                                "text": "Computer Storage",
-                                "value": "computer_storage"
-                            },
-                            {
-                                "text": "Computer Components",
-                                "value": "computer_components"
-                            },
-                            {
-                                "text": "Laptop Accessories",
-                                "value": "laptop_accessories"
-                            },
-                            {
-                                "text": "Computer Peripherals",
-                                "value": "computer_peripherals"
+    google_message = {
+
+    "expectUserResponse": True,
+    "expectedInputs": [
+        {
+            "inputPrompt": {
+                "richInitialPrompt": {
+                    "items": [
+                        {
+                            "simpleResponse": {
+                                "textToSpeech": speech
                             }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }
+                        },
+                        {
+                            "basicCard": {
+                                "title": channel.get('title'),
+                                "formattedText": speech,
+                                "image": {
+                                    "url": "http://l.yimg.com/a/i/us/we/52/" + condition.get('code') + ".gif",
+                                    "accessibilityText": "Image alternate text"
+                                },
+                                "buttons": []
+                            }
+                        }
+                    ],
+                    "suggestions": []
+                }
+            },
+            "possibleIntents": [
+                {
+                    "intent": "actions.intent.TEXT"
+                }
+            ]
+        }
+    ]
+}
 
-    print(json.dumps(slack_message))
+    print(json.dumps(google_message))
 
     return {
         "speech": speech,
         "displayText": speech,
-        "data": {"slack": slack_message},
+        "data": {"google": google_message},
         # "contextOut": [],
-        "source": "apiai-flipkart-webhook-sample"
+        "source": "apiai-weather-webhook-sample"
     }
+
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
@@ -114,4 +142,3 @@ if __name__ == '__main__':
     print( "Starting app on port %d" % port)
 
     app.run(debug=False, port=port, host='0.0.0.0')
-
