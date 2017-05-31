@@ -89,41 +89,41 @@ def makeWebhookResult(data):
     print(speech)
 
     google_message = {
-
-    "expectUserResponse": True,
-    "expectedInputs": [
-        {
-            "inputPrompt": {
-                "richInitialPrompt": {
-                    "items": [
-                        {
-                            "simpleResponse": {
-                                "textToSpeech": speech
-                            }
-                        },
-                        {
-                            "basicCard": {
-                                "title": channel.get('title'),
-                                "formattedText": speech,
-                                "image": {
-                                    "url": "http://l.yimg.com/a/i/us/we/52/" + condition.get('code') + ".gif",
-                                    "accessibilityText": "Image alternate text"
+                        "expectUserResponse": True,
+                            "is_ssml": True,
+                        "expectedInputs": [
+                            {
+                                "inputPrompt": {
+                                    "richInitialPrompt": {
+                                        "items": [
+                                            {
+                                                "simpleResponse": {
+                                                    "textToSpeech": speech
+                                                }
+                                            },
+                                            {
+                                                "basicCard": {
+                                                    "title": channel.get('title'),
+                                                    "formattedText": speech,
+                                                    "image": {
+                                                        "url": "http://l.yimg.com/a/i/us/we/52/" + condition.get('code') + ".gif",
+                                                        "accessibilityText": "Image alternate text"
+                                                    },
+                                                    "buttons": []
+                                                }
+                                            }
+                                        ],
+                                        "suggestions": []
+                                    }
                                 },
-                                "buttons": []
+                                "possibleIntents": [
+                                    {
+                                        "intent": "actions.intent.TEXT"
+                                    }
+                                ]
                             }
-                        }
-                    ],
-                    "suggestions": []
-                }
-            },
-            "possibleIntents": [
-                {
-                    "intent": "actions.intent.TEXT"
-                }
-            ]
-        }
-    ]
-}
+                        ]
+                    }
 
     print(json.dumps(google_message))
 
